@@ -1,6 +1,6 @@
 CC=			gcc
 CXX=		g++
-CFLAGS=		-g -Wall -fgnu89-inline -m32
+CFLAGS=		-g -Wall -fgnu89-inline -O2
 CXXFLAGS=	$(CFLAGS)
 DFLAGS=		-DHAVE_PTHREAD #-D_FILE_OFFSET_BITS=64
 OBJS=		utils.o bwt.o bwtio.o bwtaln.o bwtgap.o is.o \
