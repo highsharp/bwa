@@ -45,12 +45,16 @@ typedef struct {
 	bwtint_t seq_len; // sequence length
 	bwtint_t bwt_size; // size of bwt, about seq_len/4
 	uint32_t *bwt; // BWT
+	size_t mmap_bwt_size;
+	void *mmap_bwt_addr;
 	// occurance array, separated to two parts
 	uint32_t cnt_table[256];
 	// suffix array
 	int sa_intv;
 	bwtint_t n_sa;
 	bwtint_t *sa;
+	size_t mmap_sa_size;
+	void *mmap_sa_addr;
 } bwt_t;
 
 #define bwt_bwt(b, k) ((b)->bwt[(k)/OCC_INTERVAL*12 + 4 + (k)%OCC_INTERVAL/16])
