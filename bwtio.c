@@ -42,49 +42,23 @@ void bwt_dump_sa(const char *fn, const bwt_t *bwt)
 void bwt_restore_sa(const char *fn, bwt_t *bwt)
 {
 	char skipped[256];
+	FILE *fp;
 	bwtint_t primary;
 
-	struct stat sb;
-
-	if (stat(fn, &sb) == -1)
-	{
-		perror("stat");
-		abort();
-	}
-
-	int fd;
-
-	fd = open(fn, O_RDONLY);
-	if (fd < 0)
-	{
-		perror("sa open");
-		abort();
-	}
-
-	bwt->mmap_sa_size = align_mmap(sb.st_size);
-	bwt->mmap_sa_addr = mmap(NULL, bwt->mmap_sa_size, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_POPULATE, fd, 0);
-	if (bwt->mmap_bwt_addr == MAP_FAILED)
-	{
-		perror("bwt mmap");
-		abort();
-	}
-
-	read(fd, &primary, sizeof(bwtint_t));
+	fp = xopen(fn, "rb");
+	fread(&primary, sizeof(bwtint_t), 1, fp);
 	xassert(primary == bwt->primary, "SA-BWT inconsistency: primary is not the same.");
-	read(fd, skipped, sizeof(bwtint_t) * 4); // skip
-	read(fd, &bwt->sa_intv, sizeof(bwtint_t));
-	read(fd, &primary, sizeof(bwtint_t));
+	fread(skipped, sizeof(bwtint_t), 4, fp); // skip
+	fread(&bwt->sa_intv, sizeof(bwtint_t), 1, fp);
+	fread(&primary, sizeof(bwtint_t), 1, fp);
 	xassert(primary == bwt->seq_len, "SA-BWT inconsistency: seq_len is not the same.");
 
 	bwt->n_sa = (bwt->seq_len + bwt->sa_intv) / bwt->sa_intv;
-
-	size_t offset = lseek(fd, 0, SEEK_CUR);
-	bwt->sa = bwt->mmap_sa_addr + offset;
-	//sa use [0]
-	bwt->sa--;
+	bwt->sa = (bwtint_t*)calloc(bwt->n_sa, sizeof(bwtint_t));
 	bwt->sa[0] = -1;
 
-	close(fd);
+	fread(bwt->sa + 1, sizeof(bwtint_t), bwt->n_sa - 1, fp);
+	fclose(fp);
 }
 
 bwt_t *bwt_restore_bwt(const char *fn)
@@ -136,8 +110,7 @@ bwt_t *bwt_restore_bwt(const char *fn)
 void bwt_destroy(bwt_t *bwt)
 {
 	if (bwt == 0) return;
-//	free(bwt->sa); free(bwt->bwt);
+	free(bwt->sa);
 	munmap(bwt->mmap_bwt_addr, bwt->mmap_bwt_size);
-	munmap(bwt->mmap_sa_addr, bwt->mmap_sa_size);
 	free(bwt);
 }
