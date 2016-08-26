@@ -62,7 +62,7 @@ void bwt_restore_sa(const char *fn, bwt_t *bwt)
 	}
 
 	bwt->mmap_sa_size = align_mmap(sb.st_size);
-	bwt->mmap_sa_addr = mmap(NULL, bwt->mmap_sa_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+	bwt->mmap_sa_addr = mmap(NULL, bwt->mmap_sa_size, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_POPULATE, fd, 0);
 	if (bwt->mmap_bwt_addr == MAP_FAILED)
 	{
 		perror("bwt mmap");
@@ -109,7 +109,7 @@ bwt_t *bwt_restore_bwt(const char *fn)
 		abort();
 	}
 	bwt->mmap_bwt_size = align_mmap(sb.st_size);
-	bwt->mmap_bwt_addr = mmap(NULL, bwt->mmap_bwt_size, PROT_READ, MAP_SHARED, fd, 0);
+	bwt->mmap_bwt_addr = mmap(NULL, bwt->mmap_bwt_size, PROT_READ, MAP_SHARED|MAP_POPULATE, fd, 0);
 	if (bwt->mmap_bwt_addr == MAP_FAILED)
 	{
 		perror("bwt mmap");
