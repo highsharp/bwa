@@ -53,6 +53,8 @@ typedef struct {
 	int sa_intv;
 	bwtint_t n_sa;
 	bwtint_t *sa;
+	size_t mmap_sa_size;
+	void *mmap_sa_addr;
 } bwt_t;
 
 #define bwt_bwt(b, k) ((b)->bwt[(k)/OCC_INTERVAL*12 + 4 + (k)%OCC_INTERVAL/16])

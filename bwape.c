@@ -4,6 +4,8 @@
 #include <time.h>
 #include <stdio.h>
 #include <string.h>
+#include <sys/mman.h>
+
 #include "bwtaln.h"
 #include "kvec.h"
 #include "bntseq.h"
@@ -291,6 +293,7 @@ int bwa_cal_pac_pos_pe(const char *prefix, bwt_t *const _bwt[2], int n_seqs, bwa
 	buf[1] = (aln_buf_t*)calloc(n_seqs, sizeof(aln_buf_t));
 
 	if (_bwt[0] == 0) { // load forward SA
+		fprintf(stderr, "loading xxxxxxx!\n");
 		strcpy(str, prefix); strcat(str, ".bwt");  bwt[0] = bwt_restore_bwt(str);
 		strcpy(str, prefix); strcat(str, ".sa"); bwt_restore_sa(str, bwt[0]);
 		strcpy(str, prefix); strcat(str, ".rbwt"); bwt[1] = bwt_restore_bwt(str);
@@ -512,9 +515,10 @@ ubyte_t *bwa_paired_sw(const bntseq_t *bns, const ubyte_t *_pacseq, int n_seqs, 
 
 	// load reference sequence
 	if (_pacseq == 0) {
-		pacseq = (ubyte_t*)calloc(bns->l_pac/4+1, 1);
-		rewind(bns->fp_pac);
-		fread(pacseq, 1, bns->l_pac/4+1, bns->fp_pac);
+		pacseq = mmap(NULL, bns->l_pac/4+1, PROT_READ, MAP_SHARED, fileno(bns->fp_pac), 0);
+//		pacseq = (ubyte_t*)calloc(bns->l_pac/4+1, 1);
+//		rewind(bns->fp_pac);
+//		fread(pacseq, 1, bns->l_pac/4+1, bns->fp_pac);
 	} else pacseq = (ubyte_t*)_pacseq;
 	if (!popt->is_sw || ii->avg < 0.0) return pacseq;
 
@@ -715,7 +719,7 @@ void bwa_sai2sam_pe_core(const char *prefix, char *const fn_sa[2], char *const f
 		for (j = 0; j < 2; ++j)
 			bwa_refine_gapped(bns, n_seqs, seqs[j], pacseq, ntbns);
 		fprintf(stderr, "%.2f sec\n", (float)(clock() - t) / CLOCKS_PER_SEC); t = clock();
-		if (pac == 0) free(pacseq);
+		if (pac == 0) munmap(pacseq, bns->l_pac/4+1);
 
 		fprintf(stderr, "[bwa_sai2sam_pe_core] print alignments... ");
 		for (i = 0; i < n_seqs; ++i) {
